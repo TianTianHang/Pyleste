@@ -43,7 +43,7 @@ def train_agent_sb3(algorithm='PPO', total_timesteps=100000):
     
     # Create environment
     # For algorithms that need vectorized environments, we use make_vec_env
-    env = make_vec_env(CelesteGymEnv, n_envs=4)
+    env = make_vec_env(CelesteGymEnv, n_envs=32)
     
     # Choose algorithm
     if algorithm == 'PPO':
@@ -115,7 +115,8 @@ def train_agent_sb3(algorithm='PPO', total_timesteps=100000):
     print("Starting training...")
     model.learn(
         total_timesteps=total_timesteps,
-        callback=eval_callback
+        callback=eval_callback,
+        progress_bar=True
     )
     
     # Save the trained model
