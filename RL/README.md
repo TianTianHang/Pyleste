@@ -1,6 +1,6 @@
-# Celeste Reinforcement Learning
+# Celeste Reinforcement Learning with Stable Baselines3
 
-This directory contains a reinforcement learning implementation for the Celeste game environment using Deep Q-Network (DQN).
+This directory contains a reinforcement learning implementation for the Celeste game environment using Stable Baselines3 (SB3).
 
 ## Overview
 
@@ -8,16 +8,22 @@ The reinforcement learning agent is designed to play the Celeste platformer game
 
 ## Files
 
-- `celeste_env.py`: Environment wrapper for the Celeste game that provides the RL interface
-- `dqn_agent.py`: Implementation of the DQN agent with neural network architecture
-- `train.py`: Main training and testing script
+- `celeste_env.py`: Gym environment wrapper for the Celeste game that provides the SB3 interface
+- `train.py`: Main training and testing script using Stable Baselines3
 - `README.md`: This file
 
 ## Requirements
 
 - Python 3.7+
+- Stable Baselines3 (sb3)
+- Gymnasium or Gym
 - PyTorch
 - NumPy
+
+Install requirements:
+```bash
+pip install stable-baselines3 gymnasium torch numpy
+```
 
 ## Usage
 
@@ -29,6 +35,11 @@ python train.py
 # Choose option 1 to train the agent
 ```
 
+Available algorithms:
+- PPO (Proximal Policy Optimization) - Recommended
+- DQN (Deep Q-Network)
+- A2C (Advantage Actor-Critic)
+
 ### Testing the Agent
 
 ```bash
@@ -37,64 +48,72 @@ python train.py
 # Choose option 2 to test the agent
 ```
 
-### Custom Training
-
-You can also run training directly:
-
-```bash
-python train.py
-```
-
 ## Architecture
 
 ### Environment
 
-- **State Space**: 16x16x3 tensor representing:
-  - Channel 0: Game map (terrain, spikes, etc.)
+- **State Space**: 3x16x16 tensor representing:
+  - Channel 0: Game map (terrain, spikes, etc.), normalized
   - Channel 1: Normalized player X position
   - Channel 2: Normalized player Y position
 
-- **Action Space**: 6 discrete actions:
+- **Action Space**: 10 discrete actions:
   - 0: No input
   - 1: Move right
   - 2: Move left
   - 3: Move right + jump
   - 4: Move left + jump
   - 5: Jump only
+  - 6: Move right + dash
+  - 7: Move left + dash
+  - 8: Move right + up + dash
+  - 9: Move left + up + dash
 
 - **Reward Function**:
   - Positive reward for moving upward
-  - Negative reward for moving downward
+  - Small penalty for moving downward
   - Large penalty for dying (falling off screen)
   - Bonus for reaching high positions
+  - Small reward for staying alive
 
-### Neural Network
+### Algorithms
 
-The DQN uses:
-- Convolutional layers to process the game map
-- Fully connected layers for decision making
-- Experience replay for stable training
-- Target network for stable Q-value estimation
+The implementation supports multiple state-of-the-art RL algorithms from Stable Baselines3:
+
+#### PPO (Proximal Policy Optimization)
+- Most robust and recommended algorithm
+- Good balance of sample efficiency and stability
+- Uses actor-critic architecture
+
+#### DQN (Deep Q-Network)
+- Value-based approach
+- Good for discrete action spaces
+- Uses experience replay and target networks
+
+#### A2C (Advantage Actor-Critic)
+- Synchronous version of A3C
+- Simpler than PPO but effective
+- Good baseline algorithm
 
 ## Training Details
 
-- Epsilon-greedy exploration strategy (starts at 1.0, decays to 0.01)
-- Adam optimizer with learning rate 1e-4
-- Discount factor (gamma) of 0.99
-- Batch size of 32 for experience replay
-- Target network updates every 10 episodes
+- Uses CNN policy networks to process visual input
+- Implements proper Gym interface for SB3 compatibility
+- Includes evaluation callbacks for monitoring progress
+- Supports TensorBoard logging for visualization
 
 ## Results
 
 The agent learns to:
 - Navigate platforms efficiently
 - Avoid dangerous spikes
-- Use jumps strategically
+- Use jumps and dashes strategically
 - Climb as high as possible in the level
 
 ## Future Improvements
 
-- Implement PPO (Proximal Policy Optimization) for continuous control
-- Add more complex level generation
-- Implement curriculum learning with increasing difficulty
+- Implement more complex level generation
+- Add curriculum learning with increasing difficulty
 - Multi-level training across different Celeste maps
+- Hyperparameter optimization
+- Advanced algorithms like SAC or TD3 for continuous control

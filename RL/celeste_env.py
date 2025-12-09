@@ -2,25 +2,36 @@ import numpy as np
 from PICO8 import PICO8
 from Carts.Celeste import Celeste
 import CelesteUtils as utils
+import gymnasium as gym
+from gymnasium import spaces
 
-class CelesteEnvironment:
+
+class CelesteGymEnv(gym.Env):
     """
-    Environment wrapper for Celeste game to work with reinforcement learning.
+    Gym environment wrapper for Celeste game to work with Stable Baselines3.
     The goal is to make the player reach y < 0 (go up as much as possible).
     """
     
     def __init__(self):
+        super(CelesteGymEnv, self).__init__()
+        
+        # Define action space as Discrete (10 different actions)
+        # 0: no input, 1: right, 2: left, 3: right+jump, 4: left+jump, 5: jump
+        # 6: right+dash, 7: left+dash, 8: right+up+dash, 9: left+up+dash
+        self.action_space = spaces.Discrete(10)
+        
+        # Define observation space as 3-channel 16x16 image (map + player positions)
+        self.observation_space = spaces.Box(
+            low=0, high=1, shape=(3, 16, 16), dtype=np.float32
+        )
+        
         self.p8 = PICO8(Celeste)
         self.reset()
         
-        # Define action space: [left, right, up, down, jump, dash]
-        # Each action can be pressed or not pressed, so we have 2^6 = 64 possible actions
-        # But we'll simplify to basic actions for training speed
-        self.action_space = 10 # 0: no input, 1: right, 2: left, 3: right+jump, 4: left+jump, 5: jump
-        self.observation_space = (3, 16, 16)  # 16x16 game map + player position
-        
-    def reset(self):
+    def reset(self, seed=None, options=None):
         """Reset the environment to initial state."""
+        super().reset(seed=seed)
+        
         self.p8 = PICO8(Celeste)
         utils.load_room(self.p8, 0)
         utils.skip_player_spawn(self.p8)
@@ -29,7 +40,7 @@ class CelesteEnvironment:
         self.initial_player_y = self.get_player_position()[1]
         self.previous_player_y = self.initial_player_y
         
-        return self.get_state()
+        return self.get_state(), {}  # Return state and info dict
     
     def get_player_position(self):
         """Get current player position (x, y)."""
@@ -73,7 +84,7 @@ class CelesteEnvironment:
         
         # Create a 3-channel state: map, player x position, player y position
         state = np.zeros((3, 16, 16), dtype=np.float32)
-        state[0, :, :] = map_state
+        state[0, :, :] = map_state / 7.0  # Normalize map values
         state[1, :, :] = player_x / 15.0  # Normalize to [0, 1]
         state[2, :, :] = player_y / 15.0  # Normalize to [0, 1]
         
@@ -121,6 +132,7 @@ class CelesteEnvironment:
         
         # Check if episode is done
         done = self.is_done()
+        truncated = self.is_truncated()  # For Gym compatibility
         
         # Get player info for debugging
         info = {
@@ -132,7 +144,7 @@ class CelesteEnvironment:
         # Update previous position for next reward calculation
         self.previous_player_y = current_player_y
         
-        return next_state, reward, done, info
+        return next_state, reward, done, truncated, info
     
     def calculate_reward(self, current_player_y):
         """Calculate reward based on player movement."""
@@ -141,7 +153,7 @@ class CelesteEnvironment:
         
         # Penalty for moving down
         if current_player_y > self.previous_player_y:
-            height_reward -= 5  # Discourage downward movement
+            height_reward -= 2  # Reduce penalty to avoid stuck behavior
         
         # Large penalty for dying (falling off the screen)
         if current_player_y > 16:  # Player fell off the bottom
@@ -149,23 +161,33 @@ class CelesteEnvironment:
         
         # Bonus for reaching higher positions
         if current_player_y < 5:  # High up in the level
-            height_reward += 20
+            height_reward += 50
         elif current_player_y < 10:
-            height_reward += 10
+            height_reward += 20
+        elif current_player_y < 15:
+            height_reward += 5
+        
+        # Small bonus for staying alive
+        height_reward += 0.1
         
         return height_reward
     
     def is_done(self):
-        """Check if the episode is finished."""
+        """Check if the episode is finished (terminal state)."""
         current_player_y = self.get_player_position()[1]
         player = self.p8.game.get_player()
         
         # Done conditions:
-        # 1. Player died (fell off the bottom)
-        # 2. Player reached top (y < 0) - level completed
-        # 3. Player object is None (killed)
-        return current_player_y > 16 or current_player_y < 0 or player is None
+        # 1. Player reached top (y < 0) - level completed (this is good!)
+        # 2. Player object is None (killed by spikes, etc.)
+        return current_player_y < 0 or player is None
     
-    def render(self):
+    def is_truncated(self):
+        """Check if the episode is truncated (time limit)."""
+        current_player_y = self.get_player_position()[1]
+        # Truncate if player falls too far down
+        return current_player_y > 16
+    
+    def render(self, mode='human'):
         """Render the current state of the game."""
         print(self.p8.game)
