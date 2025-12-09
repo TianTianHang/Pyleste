@@ -31,6 +31,7 @@ class DQN(nn.Module):
     
     def _get_conv_out_size(self, shape):
         """Calculate the output size of the convolutional layers."""
+        
         dummy_input = torch.zeros(1, *shape)
         conv_out = self.conv1(dummy_input)
         conv_out = self.conv2(conv_out)
@@ -43,8 +44,8 @@ class DQN(nn.Module):
         if isinstance(x, np.ndarray):
             x = torch.FloatTensor(x)
         
-        # Input shape is [batch_size, 16, 16, 3], need to transpose to [batch_size, 3, 16, 16]
-        x = x.permute(0, 3, 1, 2) if len(x.shape) == 4 else x.permute(0, 3, 1, 2)
+        # # Input shape is [batch_size, 16, 16, 3], need to transpose to [batch_size, 3, 16, 16]
+        # x = x.permute(0, 3, 1, 2) if len(x.shape) == 4 else x.permute(0, 3, 1, 2)
         
         # Convolutional layers
         x = F.relu(self.conv1(x))

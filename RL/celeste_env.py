@@ -17,7 +17,7 @@ class CelesteEnvironment:
         # Each action can be pressed or not pressed, so we have 2^6 = 64 possible actions
         # But we'll simplify to basic actions for training speed
         self.action_space = 10 # 0: no input, 1: right, 2: left, 3: right+jump, 4: left+jump, 5: jump
-        self.observation_space = (16, 16, 3)  # 16x16 game map + player position
+        self.observation_space = (3, 16, 16)  # 16x16 game map + player position
         
     def reset(self):
         """Reset the environment to initial state."""
@@ -72,10 +72,10 @@ class CelesteEnvironment:
         player_x, player_y = self.get_player_position()
         
         # Create a 3-channel state: map, player x position, player y position
-        state = np.zeros((16, 16, 3), dtype=np.float32)
-        state[:, :, 0] = map_state
-        state[:, :, 1] = player_x / 15.0  # Normalize to [0, 1]
-        state[:, :, 2] = player_y / 15.0  # Normalize to [0, 1]
+        state = np.zeros((3, 16, 16), dtype=np.float32)
+        state[0, :, :] = map_state
+        state[1, :, :] = player_x / 15.0  # Normalize to [0, 1]
+        state[2, :, :] = player_y / 15.0  # Normalize to [0, 1]
         
         return state
     

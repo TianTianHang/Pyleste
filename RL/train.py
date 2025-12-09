@@ -1,10 +1,13 @@
+import os
+import sys 
+sys.path.append("")
 from time import sleep
 import numpy as np
 import torch
 import random
 from celeste_env import CelesteEnvironment
 from dqn_agent import DQNAgent
-import os
+
 
 def train_agent(episodes=1000):
     """Train the DQN agent to play Celeste."""
