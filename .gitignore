@@ -1,1 +1,3 @@
 *.pyc
+celeste_tensorboard/*
+logs/*

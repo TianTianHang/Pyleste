@@ -1,3 +1,4 @@
+import time
 from PICO8 import PICO8
 from Carts.Celeste import Celeste
 
@@ -21,29 +22,32 @@ w > . . . . . . . . . . . . . .
 . . . . . . . . . b . . . b . .
 . . . . . . . . . . . . . . . .
 . . . . . . . . . . . . . . . .
-. . . . ^ . . . . . . . . . . .
-. . . . w > . . . . . . . . . .
-. . . . w > . . . . . . . . . .
-. . . . w > . . p . . . . . . .
+. . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . .
+p . . . . . . . . . . . . . . .
 w w w w w w w w w w w w w w w w
 '''
 utils.replace_room(p8, 0, room_data)
 utils.load_room(p8, 0)
-utils.load_room(p82, 0)
+
 # skip the player spawn
 utils.skip_player_spawn(p8)
-utils.skip_player_spawn(p82)
 # view the room
-print(p8.game)
-print(p82.game)
+
 
 # hold right + x
-p8.set_inputs(r=True, x=True)
+#p8.set_inputs(False, True,  False,  False, True, False)
 
 # run for 10f while outputting player info
 print(p8.game.get_player())
-for f in range(20):
+player=p8.game.get_player()
+player.x=80
+for f in range(2):
   p8.step()
-  print(p8.game.get_player())
+  p8.set_inputs()
+  print(p8.game)
 
 # 平台跳跃游戏目标是让主角前往y<0的地方，即向上爬
+# 上冲 3
+# 跳 2

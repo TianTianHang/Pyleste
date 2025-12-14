@@ -36,8 +36,9 @@ class PICO8():
 
   # perform a game step
   def step(self):
-    self._game._update()
-    self._game._draw()
+    for _ in range(8):
+      self._game._update()
+      self._game._draw()
 
   # set button state from inputs
   def set_inputs(self, l=False, r=False, u=False, d=False, z=False, x=False):
