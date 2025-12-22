@@ -36,7 +36,7 @@ class PICO8():
 
   # perform a game step
   def step(self):
-    for _ in range(8):
+    for _ in range(1):
       self._game._update()
       self._game._draw()
 
