@@ -3,3 +3,4 @@ celeste_tensorboard/*
 logs
 CelesteTAS
 models
+test.py

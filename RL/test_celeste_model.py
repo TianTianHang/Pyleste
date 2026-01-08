@@ -15,7 +15,8 @@ def test_model(
     render_mode="human",      # 可选: "human"（打印状态）、"rgb_array"（返回图像）、None（静默）
     n_episodes=5,
     deterministic=True,
-    level=0
+    level=0,
+    custom_room=None
 ):
     """
     加载模型并在环境中测试。
@@ -35,7 +36,7 @@ def test_model(
     print(f"✅ Loaded model from {model_path}")
 
     # 创建环境
-    env = CelesteGymEnv(goal=goal, render_mode=render_mode,level=level)
+    env = CelesteGymEnv(goal=goal, render_mode=render_mode,level=level,randomize_start_position=False,custom_room=custom_room)
     
     success_count = 0
     episode_rewards = []
@@ -60,7 +61,7 @@ def test_model(
             step += 1
 
             # 可选：实时渲染（如果支持）
-            if render_mode == "human":
+            if render_mode == "human" and step%10==0:
                 env.render()  # 注意：你当前的 render() 只是 print(p8.game)
 
             done = terminated or truncated
@@ -74,9 +75,9 @@ def test_model(
         success = info.get("success", False)
         if success:
             success_count += 1
-            subprocess.run(['love','CelesteTAS', 'celeste.p8', '-level', f'{level+1}','-tas', f'[]{','.join(str(a) for a in encoded_actions)}'], shell=True, capture_output=True, text=True)
+            #subprocess.run(['love','CelesteTAS', 'celeste.p8', '-level', f'{level+1}','-tas', f'[]{','.join(str(a) for a in encoded_actions)}'], shell=True, capture_output=True, text=True)
 
-        print(f"Episode {ep + 1}: Reward = {total_reward:.2f}, Steps = {step}, Success = {success}")
+        print(f"Episode {ep + 1}: Reward = {total_reward:.2f}, Steps = {step}, Success = {success} last pos x: {info['player_x']} y: {info['player_y']}")
 
     # 输出统计结果
     avg_reward = np.mean(episode_rewards)
@@ -89,15 +90,17 @@ def test_model(
 
 if __name__ == "__main__":
     # 配置测试参数
-    MODEL_PATH = "./models/celeste_ppo/best/best_model"
+    MODEL_PATH = "models/celeste_ppo/best/best_model"
     #MODEL_PATH = 'RL/finished_models/ppo/level4/best_model'
-    GOAL = (100, -1.0)  # 与训练时一致
-    LEVEL = 5
+    GOAL = (108, -1.0) # 与训练时一致
+    LEVEL = 0
+    CUSTOM_ROOM=None
     test_model(
         model_path=MODEL_PATH,
         goal=GOAL,
         render_mode="human",   # 改为 None 可静默测试
-        n_episodes=5,
+        n_episodes=1,
         deterministic=True,
-        level=LEVEL
+        level=LEVEL,
+        custom_room=CUSTOM_ROOM
     )

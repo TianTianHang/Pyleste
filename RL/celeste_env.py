@@ -20,7 +20,7 @@ ACTIONS = {
     9: (False, False, True, False, False, True),  # up + dash
 }
 
-
+DIST=1.0
 class CelesteGymEnv(gym.Env):
     """
     Gym environment for Celeste with Curriculum Learning (stage-wise goals).
@@ -59,13 +59,16 @@ class CelesteGymEnv(gym.Env):
         super().reset(seed=seed)
         if seed is not None:
             np.random.seed(seed)  # 或使用 self.np_random（Gym 推荐）
+            
         if self.custom_room:
-            utils.replace_room(self.p8, self.level, self.custom_room)
-        if self.level is not None:
+            utils.replace_room(self.p8, 0, self.custom_room)
+            utils.load_room(self.p8, 0)
+        elif self.level is not None:
             utils.load_room(self.p8, self.level)
         else:
-            utils.load_room(self.p8, random.choice([0,2,3,4,5,6,7,8]))
+            utils.load_room(self.p8, random.choice([0,1,2,3,4,5,6,7,8]))
         utils.skip_player_spawn(self.p8)
+        
         player = self.p8.game.get_player()
         if self.goal==None and self.randomize_start_position:
             random_pos, random_goal=self.sample_player_pos_and_goal()
@@ -99,7 +102,7 @@ class CelesteGymEnv(gym.Env):
         player = self.p8.game.get_player()
         player.x = x
         player.y = y
-    def sample_player_pos_and_goal(self,pos=None, min_dist=16, max_dist=256, max_attempts=100):
+    def sample_player_pos_and_goal(self,pos=None, min_dist=16, max_dist=16, max_attempts=100):
         """
         返回:
             (player_x, player_y), (goal_x, goal_y)
@@ -240,8 +243,10 @@ class CelesteGymEnv(gym.Env):
         
         if current_y > 128 or not isinstance(player, Celeste.player):
             return -10.0
-
         reward = 0.0
+        if player.check(self.p8.game.fruit, 0, 0):
+            reward += 100
+       
         if self.visit_count[key] == 0:
             reward += 0.5  # 首次进入格子给奖励 0:0.5
         elif self.visit_count[key] >5:
@@ -253,7 +258,7 @@ class CelesteGymEnv(gym.Env):
             current_dist = np.sqrt(
                 (current_x - self.goal[0]) ** 2 + (current_y - self.goal[1]) ** 2
             )
-            if current_dist < 1.0:
+            if current_dist < DIST:
                 reward += 500
                 print('success')
             # 鼓励靠近目标：每靠近 1 像素 ≈ +0.1
@@ -284,7 +289,7 @@ class CelesteGymEnv(gym.Env):
             dist = np.sqrt(
                 (current_x - current_goal[0]) ** 2 + (current_y - current_goal[1]) ** 2
             )
-            if dist <= 1.0:
+            if dist <= DIST:
                 return True, True  # Success!
 
         return False, False

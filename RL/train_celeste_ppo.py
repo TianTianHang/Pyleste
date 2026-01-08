@@ -37,14 +37,16 @@ def make_env(goal=(64.0, 32.0), custom_room=None, rank=0,max_step=2000,level=0,r
 if __name__ == "__main__":
     # 配置目标点（可根据 curriculum 改变）
     RAND_POS=False
-    TARGET_GOAL = None # 示例目标：房间中某个位置
-    LEVEL=None
-    EVAL_GOAL=None
-    EVAL_LEVEL=None
-    BEST_MODEL_PATH=None#'RL\\finished_models\\ppo\\level4\\best_model'#models/celeste_ppo/celeste_ppo_final.zip'#RL/finished_models/ppo/best_model.zip'
-    # 创建向量化环境（即使1个也推荐用 DummyVecEnv）
+    TARGET_GOAL = (108, -1.0) # 示例目标：房间中某个位置
+    LEVEL=0
+    EVAL_GOAL=(108, -1.0)
+    EVAL_LEVEL=0
+    BEST_MODEL_PATH=None#'models/celeste_ppo/best/best_model.zip' #RL/finished_models/ppo/best_model.zip'
+    total_timesteps = 1000_000# 根据难度调整
+    CUSTOM_ROOM=None
+    # 创建向量化环境（即使1个也推'荐用 DummyVecEnv）
     num_envs = 8  # 可增加到 4/8 提升样本效率（需确保 PICO8 支持多实例）
-    env = DummyVecEnv([make_env(goal=TARGET_GOAL, rank=i,max_step=1200,level=LEVEL,randomize_start_position=RAND_POS) for i in range(num_envs)])
+    env = DummyVecEnv([make_env(goal=TARGET_GOAL, rank=i,max_step=1200,level=LEVEL,randomize_start_position=RAND_POS,custom_room=CUSTOM_ROOM) for i in range(num_envs)])
 
     # 可选：如果 observation 是 Dict，SB3 默认支持，但需确认网络结构
     # PPO 默认会自动处理 spaces.Dict（使用 CombinedExtractor）
@@ -78,7 +80,7 @@ if __name__ == "__main__":
     )
 
     # 可选：创建独立评估环境
-    eval_env = DummyVecEnv([make_env(goal=EVAL_GOAL, rank=999,max_step=1200,level=EVAL_LEVEL,randomize_start_position=RAND_POS)])
+    eval_env = DummyVecEnv([make_env(goal=EVAL_GOAL, rank=999,max_step=1200,level=EVAL_LEVEL,randomize_start_position=RAND_POS,custom_room=CUSTOM_ROOM)])
     eval_callback = EvalCallback(
         eval_env,
         best_model_save_path=os.path.join(model_dir, "best"),
@@ -91,7 +93,7 @@ if __name__ == "__main__":
     )
 
     # 开始训练
-    total_timesteps = 1000_0000# 根据难度调整
+    
     print(f"Starting PPO training for {total_timesteps} timesteps... level: {LEVEL}")
     model.learn(
         total_timesteps=total_timesteps,
